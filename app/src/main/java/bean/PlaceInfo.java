@@ -6,11 +6,11 @@ package bean;
 
 public class PlaceInfo {
     private double latitude;
-    private double longtitude;
+    private double longitude;
     private String markName;
-    public PlaceInfo(double latitude, double longtitude, String markName){
+    public PlaceInfo(double latitude, double longitude, String markName){
         this.latitude = latitude;
-        this.longtitude = longtitude;
+        this.longitude = longitude;
         this.markName = markName;
     }
 
@@ -18,11 +18,20 @@ public class PlaceInfo {
         return latitude;
     }
 
-    public double getLongtitude(){
-        return longtitude;
+    public double getLongitude(){
+        return longitude;
     }
 
     public String getMarkName(){
         return markName;
+    }
+
+    @Override
+    public String toString() {
+        return "PlaceInfo{" +
+                "latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", markName='" + markName + '\'' +
+                '}';
     }
 }

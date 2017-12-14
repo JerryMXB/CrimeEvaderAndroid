@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import android.content.res.Resources;
 
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
@@ -23,7 +24,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -38,6 +42,10 @@ import android.view.View;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import bean.PlaceInfo;
+import request.GetGooglePlaceTask;
+import view.CustomInfoWindowAdapter;
 
 public class MapsActivity extends FragmentActivity implements OnMyLocationButtonClickListener,
         OnMyLocationClickListener, OnMapReadyCallback {
@@ -118,7 +126,8 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        mMap.setMaxZoomPreference(20f);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
         try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
@@ -136,12 +145,15 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
         } catch(SecurityException se) {
             Log.i(TAG, se.getLocalizedMessage());
         }
+        CustomInfoWindowAdapter adapter = new CustomInfoWindowAdapter(MapsActivity.this);
+        mMap.setInfoWindowAdapter(adapter);
     }
 
     @Override
     public void onMyLocationClick(@NonNull Location location) {
         Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
-
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16L));
+        new getPlace().execute(String.valueOf(location.getLatitude()) + "#" + String.valueOf(location.getLongitude()));
     }
 
     @Override
@@ -150,6 +162,27 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
+    }
+
+    private class getPlace extends GetGooglePlaceTask {
+        @Override
+        protected void onPostExecute(ArrayList<PlaceInfo> results) {
+           for (PlaceInfo i : results) {
+               Log.i(TAG, i.toString());
+               Random random = new Random();
+               int r = random.nextInt(3) + 1;
+               if(r % 3 == 0) {
+                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.camera)).snippet(i.getMarkName()));
+               } else if (r % 3 == 1) {
+                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.polaroid)).snippet(i.getMarkName()));
+               } else {
+                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.direction)).snippet(i.getMarkName()));
+               }
+           }
+        }
     }
 
 

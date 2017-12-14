@@ -9,8 +9,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
+
+import com.example.chaoqunhuang.crimeevader.MapsActivity;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,18 +24,22 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
+import bean.Location;
 import bean.PlaceInfo;
 
-public class GetGooglePlaceTask extends GetUrlContentTask {
-
+public class GetGooglePlaceTask extends AsyncTask<String, Integer, ArrayList<PlaceInfo>> {
     private static final String LOG_TAG = "CrimeEvader";
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place/nearbysearch";
     private static final String RADIUS = "500";
-    private static final String TYPE_SEARCH = "museum";
+    private static final String TYPE_SEARCH = "museum,art_gallery,park";
     private static final String API_KEY = "AIzaSyAA5FDptklMXePKTEmd6m7xUu4_xg8QKqM";
     private static final String OUT_JSON = "/json";
 
-    protected ArrayList<PlaceInfo> getAroundPlace(double latitude, double longtitude){
+    protected ArrayList<PlaceInfo> doInBackground(String... locations){
+        String[] latLon = locations[0].split("#");
+        Log.i(MapsActivity.class.getSimpleName(), latLon[0]);
+        Log.i(MapsActivity.class.getSimpleName(), latLon[1]);
+
         ArrayList<PlaceInfo> resultList = null;
 
         HttpURLConnection conn = null;
@@ -39,7 +47,7 @@ public class GetGooglePlaceTask extends GetUrlContentTask {
         try {
             StringBuilder sb = new StringBuilder(PLACES_API_BASE);
             sb.append(OUT_JSON);
-            sb.append("?location="+latitude+","+longtitude);
+            sb.append("?location=" + latLon[0] + "," + latLon[1]);
             sb.append("&radius="+RADIUS);
             sb.append("&type="+TYPE_SEARCH);
             sb.append("&key=" + API_KEY);
