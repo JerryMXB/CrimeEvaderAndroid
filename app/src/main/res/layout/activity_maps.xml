@@ -22,6 +22,12 @@
         map:layout_constraintTop_toTopOf="parent"
         tools:context="com.example.chaoqunhuang.crimeevader.MapsActivity" />
 
+    <fragment
+        android:id="@+id/autocomplete_fragment"
+        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content" />
+
     <TabHost
         android:id="@+id/tabHost"
         android:layout_width="0dp"
@@ -77,7 +83,51 @@
                     <ScrollView
                         android:id="@+id/scroll1"
                         android:layout_width="match_parent"
-                        android:layout_height="204dp" />
+                        android:layout_height="204dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" >
+
+                            <TextView
+                                android:id="@+id/tab1text1"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color"
+                                android:textSize="16dp" />
+                            <TextView
+                                android:id="@+id/tab1text2"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab1text3"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab1text4"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab1text5"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                        </LinearLayout>
+
+                    </ScrollView>
 
                 </LinearLayout>
 
@@ -90,7 +140,50 @@
                     <ScrollView
                         android:id="@+id/scroll2"
                         android:layout_width="match_parent"
-                        android:layout_height="204dp"/>
+                        android:layout_height="204dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" >
+
+                            <TextView
+                                android:id="@+id/tab2text1"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color"
+                                android:textSize="16dp" />
+                            <TextView
+                                android:id="@+id/tab2text2"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab2text3"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab2text4"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                            <TextView
+                                android:id="@+id/tab2text5"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@color/colorPrimaryDark"
+                                android:textColor="@color/cast_expanded_controller_text_color" />
+                        </LinearLayout>
+                    </ScrollView>
                 </LinearLayout>
             </FrameLayout>
         </LinearLayout>

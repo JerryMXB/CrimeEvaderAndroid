@@ -9,7 +9,12 @@ import android.os.Bundle;
 
 import android.content.res.Resources;
 
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.AutocompleteFilter;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
@@ -35,8 +40,6 @@ import android.support.v4.app.ActivityCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.Geocoder;
-import android.location.Address;
 import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
@@ -54,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     private GoogleMap mMap;
     private LocationManager manager;
     private LocationListener locationListener;
+    private static ArrayList<PlaceInfo> places;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +66,32 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+
+        AutocompleteFilter typeFilter = new AutocompleteFilter.Builder()
+                .setTypeFilter(AutocompleteFilter.TYPE_FILTER_NONE)
+                .build();
+        autocompleteFragment.setFilter(typeFilter);
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                // TODO: Get info about the selected place.
+                Log.i(TAG, "Place: " + place.getName());//get place details here
+                mMap.clear();
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 16L));
+                mMap.addMarker(new MarkerOptions().position(place.getLatLng()));
+                new getPlace().execute(String.valueOf(place.getLatLng().latitude) + "#" + String.valueOf(place.getLatLng().longitude));
+            }
+
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
 
         final TabHost host = (TabHost)findViewById(R.id.tabHost);
         host.setup();
@@ -102,6 +132,41 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
                     s2 = findViewById(R.id.tabline2);
                 }
                 s2.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                if ("Crime Evader".equals(tv.getText().toString())) {
+                    mMap.clear();
+                    for (PlaceInfo i : places) {
+                        if (i.getSafetyScore() < 200) {
+                            String crimeCases = String.format("SafetyScore: %s", "Safe");
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.direction)).snippet(crimeCases));
+                        } else if (i.getSafetyScore() < 400) {
+                            String crimeCases = String.format("SafetyScore: %s", "Cautious Advised");
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.burglar)).snippet(crimeCases));
+                        } else {
+                            String crimeCases = String.format("SafetyScore: %s", "High Crime Possibility");
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.police_line)).snippet(crimeCases));
+                        }
+                    }
+                } else {
+                    mMap.clear();
+                    for (PlaceInfo i : places) {
+                        Random random = new Random();
+                        int r = random.nextInt(3) + 1;
+                        String crimeCases = String.format("Crime within 100m: %s\nCrime within 200m: %s\nCrime within 300m: %s", i.getCc100(), i.getCc200(), i.getCc300());
+                        if (r % 3 == 0) {
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.camera)).snippet(crimeCases));
+                        } else if (r % 3 == 1) {
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.polaroid)).snippet(crimeCases));
+                        } else {
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                                    .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.direction)).snippet(crimeCases));
+                        }
+                    }
+                }
             }
         });
 
@@ -128,6 +193,7 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
         mMap = googleMap;
         mMap.setMaxZoomPreference(20f);
         mMap.getUiSettings().setZoomControlsEnabled(true);
+
         try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
@@ -167,23 +233,59 @@ public class MapsActivity extends FragmentActivity implements OnMyLocationButton
     private class getPlace extends GetGooglePlaceTask {
         @Override
         protected void onPostExecute(ArrayList<PlaceInfo> results) {
-           for (PlaceInfo i : results) {
-               Log.i(TAG, i.toString());
-               Random random = new Random();
-               int r = random.nextInt(3) + 1;
-               if(r % 3 == 0) {
-                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
-                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.camera)).snippet(i.getMarkName()));
-               } else if (r % 3 == 1) {
-                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
-                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.polaroid)).snippet(i.getMarkName()));
-               } else {
-                   mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
-                           .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.direction)).snippet(i.getMarkName()));
-               }
-           }
+            int count = 1;
+            MapsActivity.places = results;
+            for (PlaceInfo i : results) {
+                Log.i(TAG, i.toString());
+                Random random = new Random();
+                int r = random.nextInt(3) + 1;
+                String crimeCases = String.format("Crime within 100m: %s\nCrime within 200m: %s\nCrime within 300m: %s", i.getCc100(), i.getCc200(), i.getCc300());
+                if (r % 3 == 0) {
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                            .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.camera)).snippet(crimeCases));
+                } else if (r % 3 == 1) {
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                            .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.polaroid)).snippet(crimeCases));
+                } else {
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude()))
+                            .title(i.getMarkName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.direction)).snippet(crimeCases));
+                }
+
+                switch (count) {
+                    case 1: {
+                        TextView tv = findViewById(R.id.tab1text1);
+                        tv.setText(i.getMarkName() + "\nLatitude:" + i.getLatitude() + "\nLongitude:" + i.getLongitude());
+                        TextView tv2 = findViewById(R.id.tab2text1);
+                        tv2.setText(i.getMarkName() + "\nSafety Score:" + i.getSafetyScore());
+                    }
+                    case 2: {
+                        TextView tv = findViewById(R.id.tab1text2);
+                        tv.setText(i.getMarkName() + "\nLatitude:" + i.getLatitude() + "\nLongitude:" + i.getLongitude());
+                        TextView tv2 = findViewById(R.id.tab2text2);
+                        tv2.setText(i.getMarkName() + "\nSafety Score:" + i.getSafetyScore());
+                    }
+                    case 3: {
+                        TextView tv = findViewById(R.id.tab1text3);
+                        tv.setText(i.getMarkName() + "\nLatitude:" + i.getLatitude() + "\nLongitude:" + i.getLongitude());
+                        TextView tv2 = findViewById(R.id.tab2text3);
+                        tv2.setText(i.getMarkName() + "\nSafety Score:" + i.getSafetyScore());
+                    }
+                    case 4: {
+                        TextView tv = findViewById(R.id.tab1text4);
+                        tv.setText(i.getMarkName() + "\nLatitude:" + i.getLatitude() + "\nLongitude:" + i.getLongitude());
+                        TextView tv2 = findViewById(R.id.tab2text4);
+                        tv2.setText(i.getMarkName() + "\nSafety Score:" + i.getSafetyScore());
+                    }
+                    case 5: {
+                        TextView tv = findViewById(R.id.tab1text5);
+                        tv.setText(i.getMarkName() + "\nLatitude:" + i.getLatitude() + "\nLongitude:" + i.getLongitude());
+                        TextView tv2 = findViewById(R.id.tab2text5);
+                        tv2.setText(i.getMarkName() + "\nSafety Score:" + i.getSafetyScore());
+                    }
+                }
+                count++;
+            }
         }
     }
-
 
 }

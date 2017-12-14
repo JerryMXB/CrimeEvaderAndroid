@@ -16,8 +16,10 @@ import android.util.Log;
 import com.example.chaoqunhuang.crimeevader.MapsActivity;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -88,6 +90,38 @@ public class GetGooglePlaceTask extends AsyncTask<String, Integer, ArrayList<Pla
                         resultJsonArray.getJSONObject(i).getJSONObject("geometry").getJSONObject("location").getDouble("lng"),
                         resultJsonArray.getJSONObject(i).getString("name")
                 );
+
+                try {
+                    URL url = new URL("http://34.201.113.162:8080");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setDoOutput(true);
+                    connection.setDoInput(true);
+                    connection.setConnectTimeout(5000);
+                    connection.setReadTimeout(5000);
+                    connection.setRequestProperty("Accept-Encoding", "UTF-8");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    OutputStream os = connection.getOutputStream();
+                    String body = "{\"type\":\"safety\",\"latitude\":\"" + place.getLatitude() + "\",\"longitude\":\"" + place.getLongitude() + "\"}";
+                    os.write((body.getBytes("UTF-8")));
+                    os.close();
+
+                    BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    String content = "", line;
+                    while ((line = rd.readLine()) != null) {
+                        content += line + "\n";
+                    }
+                    Log.i(LOG_TAG, content);
+                    JSONObject jsonObject = new JSONObject(content);
+                    place.setCc100(jsonObject.getInt("100"));
+                    place.setCc200(jsonObject.getInt("200"));
+                    place.setCc300(jsonObject.getInt("300"));
+                    place.setSafetyScore(jsonObject.getDouble("score"));
+                    rd.close();
+                    connection.disconnect();
+                } catch (Exception e) {
+                    Log.i(LOG_TAG, e.getMessage());
+                }
                 resultList.add(place);
             }
         } catch (JSONException e) {
