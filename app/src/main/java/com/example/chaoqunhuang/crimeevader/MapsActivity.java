@@ -1,6 +1,9 @@
 package com.example.chaoqunhuang.crimeevader;
 
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -8,8 +11,12 @@ import android.content.res.Resources;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -27,8 +34,13 @@ import android.location.Location;
 import android.location.Geocoder;
 import android.location.Address;
 import android.util.Log;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TextView;
+import android.widget.Toast;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMyLocationButtonClickListener,
+        OnMyLocationClickListener, OnMapReadyCallback {
 
     private static final String TAG = MapsActivity.class.getSimpleName();
     private GoogleMap mMap;
@@ -43,43 +55,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        final TabHost host = (TabHost)findViewById(R.id.tabHost);
+        host.setup();
+        //Tab 1
+        TabHost.TabSpec spec = host.newTabSpec("Tab One");
+        spec.setContent(R.id.tab1);
+        spec.setIndicator("History");
+        host.addTab(spec);
+
+        //Tab 2
+        spec = host.newTabSpec("Tab Two");
+        spec.setContent(R.id.tab2);
+        spec.setIndicator("Crime Evader");
+        host.addTab(spec);
+
+        TextView tv2 = (TextView) host.getTabWidget().getChildAt(0).findViewById(android.R.id.title);
+        tv2.setTextColor(Color.parseColor("#FFFFFF"));
+
+        host.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            @Override
+            public void onTabChanged(String tabId) {
+                for (int i = 0; i < host.getTabWidget().getChildCount(); i++) {
+                    TextView tv = (TextView) host.getTabWidget().getChildAt(i).findViewById(android.R.id.title); //Unselected Tabs
+                    tv.setTextColor(Color.parseColor("#000000"));
+                    View s1 = findViewById(R.id.tabline1);
+                    View s2 = findViewById(R.id.tabline2);
+                    s2.setBackgroundColor(Color.parseColor("#000000"));
+                    s1.setBackgroundColor(Color.parseColor("#000000"));
+                }
+
+                TextView tv = (TextView) host.getCurrentTabView().findViewById(android.R.id.title); //for Selected Tab
+                Log.i(TAG, tv.getText().toString());
+                tv.setTextColor(Color.parseColor("#FFFFFF"));
+                View s2;
+                if ("History".equals(tv.getText().toString())) {
+                    s2 = findViewById(R.id.tabline1);
+                } else {
+                    s2 = findViewById(R.id.tabline2);
+                }
+                s2.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            }
+        });
+
+
         //track
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                //get the latitude and longitude from the location
-
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                Log.i(TAG, "latitude" + latitude +",longitude" + longitude);
-
-                //get the location name from latitude and longitude
-                //Geocoder geocoder = new Geocoder(getApplicationContext());
-                LatLng latLng = new LatLng(latitude, longitude);
-                mMap.addMarker(new MarkerOptions().position(latLng).title(latLng.toString()));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
-            }
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        };
-        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
 
 
@@ -106,18 +129,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (Resources.NotFoundException e) {
             System.out.println(e.getMessage());
         }
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(40.7, -70.0), 13));
-
-        // Add a marker in Sydney and move the camera
-        /*LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+        try {
+            mMap.setMyLocationEnabled(true);
+            mMap.setOnMyLocationButtonClickListener(this);
+            mMap.setOnMyLocationClickListener(this);
+        } catch(SecurityException se) {
+            Log.i(TAG, se.getLocalizedMessage());
+        }
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        manager.removeUpdates(locationListener);
-        Log.i("onPause...","paused");
+    public void onMyLocationClick(@NonNull Location location) {
+        Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
+
     }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        // Return false so that we don't consume the event and the default behavior still occurs
+        // (the camera animates to the user's current position).
+        return false;
+    }
+
+
 }
